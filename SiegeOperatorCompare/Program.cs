@@ -77,6 +77,7 @@ namespace SiegeOperatorCompare
                 //Prepare the best match and all the weights
                 CompareResult bestMatch = new CompareResult();
                 WeightList weightList = new WeightList() { Minimum = globalMinimum };
+                weightList.Load(minimums);
 
                 using (var imgSource = new MagickImage(source))
                 {

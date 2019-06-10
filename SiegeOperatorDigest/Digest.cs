@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -117,20 +118,39 @@ namespace SiegeOperatorDigest
             byte[] bytes = ImageProcessor.ProcessImage(file);
 
             //Upload the image
-            Log("Uploading image " + file);
+            //Log("Uploading image " + file);
             var response = await UploadImageAsync($"{SIEGE_API}/evaluate.php?username={Username}&access_key={AccessKey}", bytes);
             if (response.IsSuccessStatusCode)
             {
                 string content = await response.Content.ReadAsStringAsync();
-                Log("Success. " + content);
+                try
+                {
+                    var result = JsonConvert.DeserializeObject<CompareResult>(content);
+                    Log("Operator\t\t" + result.operatorName);
+                    Log("Weight\t\t" + result.weight);
+                    Log("Min\t\t" + result.minimum);
+                }
+                catch(Exception e)
+                {
+                    Log("error: " + e.Message);
+                    Log("- " + content);
+                }
             }
 
             //Deleting image
             if (DeleteImages)
             {
-                Log("Deleting image " + file);
+                //Log("Deleting image " + file);
                 File.Delete(file);
             }
+        }
+
+        struct CompareResult
+        {
+            public string fileName;
+            public string operatorName;
+            public double weight;
+            public double minimum;
         }
 
         private async Task<HttpResponseMessage> UploadImageAsync(string url, byte[] ImageData, 
