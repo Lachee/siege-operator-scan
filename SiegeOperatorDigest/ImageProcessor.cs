@@ -20,25 +20,36 @@ namespace SiegeOperatorDigest
 
             using (var image = new MagickImage(filepath))
             {
-                if (image.Width < 1000 || image.Height < 500)
-                    throw new ArgumentException("Image supplied is too small. Need at least 1000x500");
-
-                if (image.Width > 2000 || image.Height > 2000)
-                    throw new ArgumentException("Image supplied is too large. Need at maximum 2000x2000");
-
-                //Calculate the relative position
-                int x =         (int) Math.Round(xRatio * image.Width      );
-                int y =         (int) Math.Round(yRatio * image.Height     );
-                int width =     (int) Math.Round(widthRatio * image.Width  );
-                int height =    (int) Math.Round(heightRatio * image.Height);
-                
-                //Perform the crop, repage and return the bytes
-                image.Crop(new MagickGeometry(x, y, width, height));
-                image.RePage();
-
-                image.Format = MagickFormat.Png;
-                return image.ToByteArray();
+                return ProcessImage(image);
             }
+        }
+
+        public static byte[] ProcessImage(byte[] bytes, int index, int count)
+        {
+            using (var image = new MagickImage(bytes, index, count))
+                return ProcessImage(image);
+        }
+
+        public static byte[] ProcessImage(MagickImage image)
+        {
+            if (image.Width < 1000 || image.Height < 500)
+                throw new ArgumentException("Image supplied is too small. Need at least 1000x500");
+
+            if (image.Width > 2000 || image.Height > 2000)
+                throw new ArgumentException("Image supplied is too large. Need at maximum 2000x2000");
+
+            //Calculate the relative position
+            int x = (int)Math.Round(xRatio * image.Width);
+            int y = (int)Math.Round(yRatio * image.Height);
+            int width = (int)Math.Round(widthRatio * image.Width);
+            int height = (int)Math.Round(heightRatio * image.Height);
+
+            //Perform the crop, repage and return the bytes
+            image.Crop(new MagickGeometry(x, y, width, height));
+            image.Format = MagickFormat.Jpeg;
+            image.RePage();
+
+            return image.ToByteArray();
         }
     }
 }

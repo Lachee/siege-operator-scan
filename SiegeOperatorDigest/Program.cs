@@ -1,5 +1,10 @@
-﻿using System;
+﻿using ImageMagick;
+using System;
+using System.IO;
+using System.IO.Pipes;
 using System.Threading;
+
+
 
 namespace SiegeOperatorDigest
 {
@@ -9,9 +14,8 @@ namespace SiegeOperatorDigest
         {
             string username = null;
             string accessKey = "Hfkd67ASfbasf";
-            bool cleanDirectory = true;
-            bool cleanImages = true;
-            int scanRate = 5000;
+            int uploadRate = 10;
+            int bufferSize = 1280 * 720;
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -24,23 +28,18 @@ namespace SiegeOperatorDigest
                     case "-username":
                         username = args[++i];
                         break;
-
+                        
                     case "-access_key":
                         accessKey = args[++i];
                         break;
 
-                    case "-dont_purge":
-                        cleanDirectory = false;
+                    case "-rate":
+                        uploadRate = int.Parse(args[++i]);
                         break;
 
-                    case "-dont_purge_images":
-                        cleanImages = false;
+                    case "-buffer":
+                        bufferSize = int.Parse(args[++i]);
                         break;
-
-                    case "-scan":
-                        scanRate = int.Parse(args[++i]);
-                        break;
-
 
                 }
 
@@ -52,16 +51,10 @@ namespace SiegeOperatorDigest
                 username = Console.ReadLine();
             }
 
-            var digest = new Digest(username, accessKey)
+            var digest = new PipeDigest(username, accessKey, bufferSize)
             {
-                DeleteImages = cleanImages,
-                ScanRate = scanRate
+                UploadRate = uploadRate
             };
-
-
-            if (cleanDirectory)
-                digest.CleanCaptureDirectory().Wait();
-
             using (var tokenSource = new CancellationTokenSource())
             {
                 var task = digest.ContinouslyScan(tokenSource.Token);
