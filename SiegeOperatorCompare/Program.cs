@@ -161,7 +161,7 @@ namespace SiegeOperatorCompare
         /// <returns></returns>
         static async Task<JObject> GetOperators()
         {
-            HttpResponseMessage response = await http.GetAsync("https://d.lu.je/siege/operators.php?username={Username}");
+            HttpResponseMessage response = await http.GetAsync("https://d.lu.je/siege/operators.php?username=" + Username);
             if (response.IsSuccessStatusCode)
             {
                 string content = await response.Content.ReadAsStringAsync();
