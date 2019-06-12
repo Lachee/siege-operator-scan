@@ -125,7 +125,7 @@ namespace SiegeOperatorCompare
 
             WeightList weightList = new WeightList();
 
-            if (!File.Exists(minimums))
+            if (File.Exists(minimums))
                 weightList.Load(minimums);
 
             //Get all the operators

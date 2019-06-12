@@ -37,7 +37,7 @@ namespace SiegeOperatorCompare
                 content.Append(kp.Key).Append('=').Append(kp.Value).Append('\n');
 
             //Save the file
-            File.WriteAllText(file, content.ToString());
+            File.WriteAllText(file, content.ToString(), Encoding.UTF8);
         }
 
         public void Load(string file)
