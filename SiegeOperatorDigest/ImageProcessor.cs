@@ -44,6 +44,7 @@ namespace SiegeOperatorDigest
             int width = (int)Math.Round(widthRatio * image.Width);
             int height = (int)Math.Round(heightRatio * image.Height);
 
+
             //Perform the crop, repage and return the bytes
             image.Crop(new MagickGeometry(x, y, width, height));
             image.Format = MagickFormat.Jpeg;

@@ -111,48 +111,7 @@ namespace SiegeOperatorDigest
         }
 
 
-        private async Task DigestFile(string file)
-        {
-            //Process the image
-            Log("Processing image " + file);
-            byte[] bytes = ImageProcessor.ProcessImage(file);
-
-            //Upload the image
-            //Log("Uploading image " + file);
-            var response = await UploadImageAsync($"{SIEGE_API}/evaluate.php?username={Username}&access_key={AccessKey}", bytes);
-            if (response.IsSuccessStatusCode)
-            {
-                string content = await response.Content.ReadAsStringAsync();
-                try
-                {
-                    var result = JsonConvert.DeserializeObject<CompareResult>(content);
-                    Log("Operator\t\t" + result.operatorName);
-                    Log("Weight\t\t" + result.weight);
-                    Log("Min\t\t" + result.minimum);
-                }
-                catch(Exception e)
-                {
-                    Log("error: " + e.Message);
-                    Log("- " + content);
-                }
-            }
-
-            //Deleting image
-            if (DeleteImages)
-            {
-                //Log("Deleting image " + file);
-                File.Delete(file);
-            }
-        }
-
-        struct CompareResult
-        {
-            public string fileName;
-            public string operatorName;
-            public double weight;
-            public double minimum;
-        }
-
+        private Task DigestFile(string file) { return Task.CompletedTask; }
         private async Task<HttpResponseMessage> UploadImageAsync(string url, byte[] ImageData, 
                     string fieldName = "image", string fileName = "image.png", string contentType = "image/png")
         {

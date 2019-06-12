@@ -11,6 +11,24 @@ namespace SiegeOperatorDigest
 {
     class PipeDigest
     {
+        public struct OperatorResult
+        {
+            public string fileName;
+            public string operatorName;
+            public double weight;
+            public double minimum;
+        }
+
+
+        public delegate void ImageByteEvent(byte[] image, int length);
+        public event ImageByteEvent OnImageBytesReceive;
+        public event ImageByteEvent OnImageBytesUpload;
+
+        public delegate void OnOperatorSetEvent(OperatorResult operatorResult);
+        public event OnOperatorSetEvent OnOperatorSet;
+
+
+
         const string SIEGE_API = "https://d.lu.je/siege";
         static HttpClient http = new HttpClient();
 
@@ -41,13 +59,14 @@ namespace SiegeOperatorDigest
                 {
                     // Connect to the pipe or wait until the pipe is available.
                     Log("Attempting to connect to pipe...");
-                    client.Connect();
+                    await client.ConnectAsync(cancelationToken);
 
                     Log("Connected to pipe, performing reads.");
                     do
                     {
                         //Read the bytes asyncronously. We supply a cancelation token incase we cancel in the meantime
                         _bytesRead = await client.ReadAsync(_buffer, 0, _buffer.Length, cancelationToken);
+                        OnImageBytesReceive?.Invoke(_buffer, _bytesRead);
 
                         //We have read bytes, but it may have been because of a cancelation. We should only process if we are able too
                         if (!cancelationToken.IsCancellationRequested)
@@ -69,7 +88,9 @@ namespace SiegeOperatorDigest
                 return;
 
             //Process the image
-            byte[] opicon = ImageProcessor.ProcessImage(bytes, 0, count);
+            Log("Processing " + count + "b");
+            var opicon = ImageProcessor.ProcessImage(bytes, 0, count);
+            OnImageBytesUpload?.Invoke(opicon, opicon.Length);
 
             //Upload the image
             //Log("Uploading image " + file);
@@ -80,11 +101,12 @@ namespace SiegeOperatorDigest
                 string content = await response.Content.ReadAsStringAsync();
                 try
                 {
-                    var result = JsonConvert.DeserializeObject<CompareResult>(content);
+                    var result = JsonConvert.DeserializeObject<OperatorResult>(content);
                     Log("Operator\t\t" + result.operatorName);
                     Log("Weight\t\t" + result.weight);
                     Log("Min\t\t" + result.minimum);
                     Log("======================");
+                    OnOperatorSet?.Invoke(result);
                     _lastCheck = DateTime.Now;
                 }
                 catch (Exception e)
@@ -95,13 +117,6 @@ namespace SiegeOperatorDigest
             }
         }
 
-        struct CompareResult
-        {
-            public string fileName;
-            public string operatorName;
-            public double weight;
-            public double minimum;
-        }
 
         private async Task<HttpResponseMessage> UploadImageAsync(string url, byte[] ImageData,
                     string fieldName = "image", string fileName = "image.png", string contentType = "image/png")

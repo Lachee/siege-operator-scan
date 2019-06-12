@@ -15,6 +15,10 @@ namespace SiegeOperatorCompare
         static string minimums = "cache/weights.txt";
         static double globalMinimum = 0.15;
 
+        //This is one of the best PC players, he took like 4 hours to get his rank when the season started
+        // Using him because he is likely to have already played the new operators.
+        static string Username = "J0hnny.AVANGAR"; 
+
         struct CompareResult
         {
             public string fileName;
@@ -39,6 +43,10 @@ namespace SiegeOperatorCompare
                     case "-c":
                     case "-cache":
                         doCache = true;
+                        break;
+
+                    case "-username":
+                        Username = args[++i];
                         break;
 
                     case "-input":
@@ -153,7 +161,7 @@ namespace SiegeOperatorCompare
         /// <returns></returns>
         static async Task<JObject> GetOperators()
         {
-            HttpResponseMessage response = await http.GetAsync("https://d.lu.je/siege/operators.php?username=KommadantKlink");
+            HttpResponseMessage response = await http.GetAsync("https://d.lu.je/siege/operators.php?username={Username}");
             if (response.IsSuccessStatusCode)
             {
                 string content = await response.Content.ReadAsStringAsync();
