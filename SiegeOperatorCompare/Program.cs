@@ -123,7 +123,10 @@ namespace SiegeOperatorCompare
             if (!Directory.Exists(cache))
                 Directory.CreateDirectory(cache);
 
-            bool createMinimums = !File.Exists(minimums);
+            WeightList weightList = new WeightList();
+
+            if (!File.Exists(minimums))
+                weightList.Load(minimums);
 
             //Get all the operators
             JObject response = await GetOperators();
@@ -150,9 +153,12 @@ namespace SiegeOperatorCompare
                 }
 
                 //Add to the cache
-                if (createMinimums)
-                    File.AppendAllText(minimums, name + "=0.5\n");
+                if (!weightList.Contains(name))
+                    weightList.Add(name, 0.5);
             }
+
+            //Save the file
+            weightList.Save(minimums);
         }
         
         /// <summary>
