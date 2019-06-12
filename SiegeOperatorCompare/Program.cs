@@ -31,6 +31,7 @@ namespace SiegeOperatorCompare
         {
             bool doCache = false;
             string input = null;
+            string firstCheck = null;
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -62,6 +63,10 @@ namespace SiegeOperatorCompare
                         minimums = args[++i];
                         break;
 
+                    case "-first":
+                        firstCheck = args[++i];
+                        break;
+
                     case "-globalmin":
                         globalMinimum = double.Parse(args[++i]);
                         break;
@@ -73,12 +78,12 @@ namespace SiegeOperatorCompare
 
             if (!string.IsNullOrEmpty(input))
             {
-                CompareResult result = Compare(input).Result;
+                CompareResult result = Compare(input, firstCheck).Result;
                 Console.WriteLine(JsonConvert.SerializeObject(result));
             }
         }
 
-        static async Task<CompareResult> Compare(string source)
+        static async Task<CompareResult> Compare(string source, string firstOperator = null)
         {
             return await Task.Run(() =>
             {
@@ -87,29 +92,58 @@ namespace SiegeOperatorCompare
                 WeightList weightList = new WeightList() { Minimum = globalMinimum };
                 weightList.Load(minimums);
 
-                using (var imgSource = new MagickImage(source))
+                using (var sourceIcon = new MagickImage(source))
                 {
+                    //We should check the first operator first. This will be our baseline to beat.
+                    if (!string.IsNullOrEmpty(firstOperator))
+                    {
+                        var firstopResult = CheckOperator(sourceIcon, firstOperator);
+                        if (firstopResult.weight >= weightList.GetWeight(firstOperator))
+                            bestMatch = firstopResult;
+                    }
+
+                    //Iterate over every file and check the shrink
                     foreach (string file in Directory.EnumerateFiles(cache, "*.shrink.png"))
                     {
+                        //Get the name and skip if we did them first
                         string operatorName = Path.GetFileNameWithoutExtension(file).Replace(".shrink", "").ToUpperInvariant();
+                        if (operatorName == firstOperator) continue;
+
+                        //Prepare their minimum
                         double minimum = weightList.GetWeight(operatorName);
 
-                        using (var imgShrink = new MagickImage(file))
+                        //Get their result.
+                        var result = CheckOperator(sourceIcon, operatorName);
+                        if (result.weight > minimum && result.weight >= bestMatch.weight)
                         {
-                            double diff = imgSource.Compare(imgShrink, new ErrorMetric());
-                            if (diff > minimum && diff > bestMatch.weight)
-                            {
-                                bestMatch.fileName = file;
-                                bestMatch.operatorName = operatorName;
-                                bestMatch.weight = diff;
-                                bestMatch.minimum = minimum;
-                            }
+                            result.minimum = minimum;
+                            bestMatch = result;
                         }
                     }
                 }
 
                 return bestMatch;
             });
+        }
+
+        private static CompareResult CheckOperator(MagickImage sourceIcon, string operatorName)
+        {
+            string filepath = Path.Combine(cache, operatorName + ".shrink.png");
+            CompareResult result = new CompareResult()
+            {
+                operatorName = operatorName,
+                fileName = filepath,
+                weight = 0,
+                minimum = 0
+            };
+
+            if (!File.Exists(filepath))
+                return result;
+            
+            using (var operatorIcon = new MagickImage(filepath))
+                result.weight = sourceIcon.Compare(operatorIcon, new ErrorMetric());
+            
+            return result;
         }
 
         /// <summary>
