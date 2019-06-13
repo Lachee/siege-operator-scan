@@ -77,14 +77,18 @@ namespace SiegeOperatorCompare.Redis
                     bestOperator.Match = CompareSourceWithCache(sourceImage, cacheByteString);
                 }
 
-                //Iterate over every value, and check if its better
-                foreach(var keypair in allOperators)
+                //If we already have a valid good operator, then skip the checks,
+                //  otherise iterate over every value, and check if its better
+                if (currentOperator == null || currentOperator.Match < currentOperator.MinimumMatch)
                 {
-                    double minimum  = Weights.GetWeight(keypair.Key);
-                    double match    = CompareSourceWithCache(sourceImage, keypair.Value);
+                    foreach (var keypair in allOperators)
+                    {
+                        double minimum = Weights.GetWeight(keypair.Key);
+                        double match = CompareSourceWithCache(sourceImage, keypair.Value);
 
-                    if (match >= minimum && (bestOperator == null || bestOperator.Match < match))
-                        bestOperator = new Operator(keypair.Key, minimum) { Match = match };
+                        if (match >= minimum && (bestOperator == null || bestOperator.Match < match))
+                            bestOperator = new Operator(keypair.Key, minimum) { Match = match };
+                    }
                 }
             }
 
@@ -96,6 +100,7 @@ namespace SiegeOperatorCompare.Redis
             }
 
             Console.WriteLine("Completed in {0}ms", stopwatch.ElapsedMilliseconds);
+            Console.WriteLine("=============================");
         }
 
         private double CompareSourceWithCache(MagickImage sourceImage, string cacheByteString)
