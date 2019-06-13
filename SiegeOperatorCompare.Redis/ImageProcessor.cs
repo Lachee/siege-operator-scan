@@ -26,7 +26,7 @@ namespace SiegeOperatorCompare.Redis
             this.manager = manager;
             this.Timeout = timeout;
             this.Weights = weights;
-            this.PlaytimeExpirey = TimeSpan.FromSeconds(15);
+            this.PlaytimeExpirey = TimeSpan.FromSeconds(30);
         }
 
         public async Task ListenAsync(CancellationToken cancellationToken)
@@ -63,6 +63,7 @@ namespace SiegeOperatorCompare.Redis
 
             //Get the users current operator and image
             var currentOperator = GetCurrentOperator(username);
+            Console.WriteLine("Current Operator: {0}", currentOperator?.Name);
 
             //Find the best operator
             using (var sourceImage = new MagickImage(image))
@@ -75,11 +76,15 @@ namespace SiegeOperatorCompare.Redis
                 {
                     bestOperator = currentOperator;
                     bestOperator.Match = CompareSourceWithCache(sourceImage, cacheByteString);
+
+                    //Make sure the match is actually valid.
+                    if (bestOperator.Match < bestOperator.MinimumMatch)
+                        bestOperator = null;
                 }
 
                 //If we already have a valid good operator, then skip the checks,
                 //  otherise iterate over every value, and check if its better
-                if (currentOperator == null || currentOperator.Match < currentOperator.MinimumMatch)
+                if (currentOperator == null)
                 {
                     foreach (var keypair in allOperators)
                     {
