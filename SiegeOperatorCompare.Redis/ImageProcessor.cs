@@ -63,7 +63,7 @@ namespace SiegeOperatorCompare.Redis
 
             //Get the users current operator and image
             var currentOperator = GetCurrentOperator(username);
-            Console.WriteLine("Current Operator: {0}", currentOperator?.Name);
+            Console.WriteLine("Current Operator:\t{0}", currentOperator?.Name);
 
             //Find the best operator
             using (var sourceImage = new MagickImage(image))
@@ -86,6 +86,7 @@ namespace SiegeOperatorCompare.Redis
                 //  otherise iterate over every value, and check if its better
                 if (bestOperator == null)
                 {
+                    Console.WriteLine("- Check All");
                     foreach (var keypair in allOperators)
                     {
                         double minimum = Weights.GetWeight(keypair.Key);
@@ -100,11 +101,11 @@ namespace SiegeOperatorCompare.Redis
             //Tada we found someone, maybe
             if (bestOperator != null)
             {
-                Console.WriteLine("Best Operator {0} at {1}% (min: {2})", bestOperator.Name, bestOperator.Match * 100, bestOperator.MinimumMatch);
+                Console.WriteLine("Best Operator:\t{0} at {1}% (min: {2})", bestOperator.Name, bestOperator.Match * 100, bestOperator.MinimumMatch);
                 SetCurrentOperator(username, bestOperator);
             }
 
-            Console.WriteLine("Completed in {0}ms", stopwatch.ElapsedMilliseconds);
+            Console.WriteLine("Completed:\t{0}ms", stopwatch.ElapsedMilliseconds);
             Console.WriteLine("=============================");
         }
 
