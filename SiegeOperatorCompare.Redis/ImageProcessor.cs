@@ -84,7 +84,7 @@ namespace SiegeOperatorCompare.Redis
 
                 //If we already have a valid good operator, then skip the checks,
                 //  otherise iterate over every value, and check if its better
-                if (currentOperator == null)
+                if (bestOperator == null)
                 {
                     foreach (var keypair in allOperators)
                     {
